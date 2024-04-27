@@ -2,6 +2,7 @@ use std::cmp::Ordering;
 use std::net::{TcpListener, TcpStream};
 use std::io::{self, prelude::*, BufRead, BufReader};
 use std::fs::File;
+use std::path::Path;
 fn main() 
 {
     let listener = TcpListener::bind("127.0.0.1:8080").expect("Bind failed");
@@ -44,5 +45,23 @@ fn handle_get(req: Vec<&str>, mut stream: TcpStream)
         
         let mut file = File::open("hi.html").unwrap();
         io::copy(&mut file, &mut stream).expect("Sending file failed");
+    }
+    else 
+    {
+        let path = &req[1][1..];
+        if Path::new(path).exists()
+        {
+            let response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n";
+        
+            stream.write_all(response.as_bytes()).unwrap();
+            let mut file = File::open(path).unwrap();
+            io::copy(&mut file, &mut stream).expect("Sending file failed");
+        }
+        else 
+        {
+            let response = "HTTP/1.1 404 Not found\r\n\r\n";
+        
+            stream.write_all(response.as_bytes()).unwrap();
+        }
     }
 }
